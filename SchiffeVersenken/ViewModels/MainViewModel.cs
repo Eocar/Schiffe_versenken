@@ -191,15 +191,16 @@ namespace SchiffeVersenken.ViewModels
             });
         }
 
-        private void OnDisconnected()
+        private void OnDisconnected(string? errorMessage)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
                 if (Phase != GamePhase.GameOver && Phase != GamePhase.Menu)
                 {
                     Phase = GamePhase.GameOver;
-                    GameOverMessage = "Verbindung getrennt.";
-                    StatusText = "Verbindung getrennt.";
+                    string msg = errorMessage != null ? $"Verbindungsfehler: {errorMessage}" : "Verbindung getrennt.";
+                    GameOverMessage = msg;
+                    StatusText = msg;
                 }
             });
         }

@@ -17,7 +17,7 @@ namespace SchiffeVersenken.Network
 
         public event Action<string>? MessageReceived;
         public event Action? Connected;
-        public event Action? Disconnected;
+        public event Action<string?>? Disconnected;
 
         public bool IsConnected => _client?.Connected == true;
 
@@ -66,13 +66,16 @@ namespace SchiffeVersenken.Network
             }
             catch (OperationCanceledException)
             {
-                // Normal shutdown via cancellation token
+                // Normal shutdown via cancellation token - do not raise Disconnected
+                return;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Connection closed unexpectedly
+                // Connection closed unexpectedly; surface the error via Disconnected
+                Disconnected?.Invoke(ex.Message);
+                return;
             }
-            Disconnected?.Invoke();
+            Disconnected?.Invoke(null);
         }
 
         public void Dispose()
