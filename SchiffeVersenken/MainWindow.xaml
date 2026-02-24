@@ -1,0 +1,263 @@
+﻿<Window x:Class="SchiffeVersenken.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SchiffeVersenken"
+        xmlns:vm="clr-namespace:SchiffeVersenken.ViewModels"
+        xmlns:models="clr-namespace:SchiffeVersenken.Models"
+        mc:Ignorable="d"
+        Title="Schiffe Versenken" Height="720" Width="900"
+        Background="#1a1a2e">
+
+    <Window.Resources>
+        <!-- Cell template for own board -->
+        <DataTemplate x:Key="OwnCellTemplate">
+            <Button Width="32" Height="32" Margin="1"
+                    Command="{Binding DataContext.PlaceCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    CommandParameter="{Binding}"
+                    BorderThickness="1" BorderBrush="#444">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="LightSteelBlue"/>
+                        <Setter Property="Foreground" Value="Transparent"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static models:CellState.Ship}">
+                                <Setter Property="Background" Value="#607080"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static models:CellState.Hit}">
+                                <Setter Property="Background" Value="#cc2200"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Content" Value="✕"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static models:CellState.Miss}">
+                                <Setter Property="Background" Value="#ddeeff"/>
+                                <Setter Property="Foreground" Value="#5588aa"/>
+                                <Setter Property="Content" Value="•"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static models:CellState.Sunk}">
+                                <Setter Property="Background" Value="#8b0000"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Content" Value="✕"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </DataTemplate>
+
+        <!-- Cell template for enemy board -->
+        <DataTemplate x:Key="EnemyCellTemplate">
+            <Button Width="32" Height="32" Margin="1"
+                    Command="{Binding DataContext.AttackCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    CommandParameter="{Binding}"
+                    BorderThickness="1" BorderBrush="#444">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="Foreground" Value="Transparent"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static models:CellState.Hit}">
+                                <Setter Property="Background" Value="#cc2200"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Content" Value="✕"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static models:CellState.Miss}">
+                                <Setter Property="Background" Value="#ddeeff"/>
+                                <Setter Property="Foreground" Value="#5588aa"/>
+                                <Setter Property="Content" Value="•"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static models:CellState.Sunk}">
+                                <Setter Property="Background" Value="#8b0000"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Content" Value="✕"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </DataTemplate>
+
+        <Style x:Key="HeaderText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#e0e0ff"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,4,0,4"/>
+        </Style>
+
+        <Style x:Key="LabelText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#a0a0c0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="InputBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#2a2a4a"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#4444aa"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Width" Value="100"/>
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#3355aa"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#4466cc"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Status bar at top -->
+        <Border DockPanel.Dock="Top" Background="#16213e" Padding="10,8">
+            <TextBlock Text="{Binding StatusText}" Foreground="#e0e0ff"
+                       FontSize="13" TextWrapping="Wrap" HorizontalAlignment="Center"/>
+        </Border>
+
+        <!-- Bottom controls -->
+        <Border DockPanel.Dock="Bottom" Background="#16213e" Padding="8">
+            <StackPanel>
+                <!-- Menu phase -->
+                <StackPanel Visibility="{Binding IsMenuPhase, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Schiffe Versenken" Style="{StaticResource HeaderText}" FontSize="20" Margin="0,4,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Host section -->
+                        <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                            <TextBlock Text="Spiel hosten" Style="{StaticResource HeaderText}"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4">
+                                <TextBlock Text="Port: " Style="{StaticResource LabelText}"/>
+                                <TextBox Text="{Binding HostPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputBox}" Width="80"/>
+                            </StackPanel>
+                            <Button Content="Spiel hosten" Command="{Binding HostGameCommand}" Style="{StaticResource ActionButton}"/>
+                        </StackPanel>
+
+                        <Separator Grid.Column="1" Background="#4444aa"/>
+
+                        <!-- Connect section -->
+                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                            <TextBlock Text="Verbinden" Style="{StaticResource HeaderText}"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2">
+                                <TextBlock Text="Host: " Style="{StaticResource LabelText}"/>
+                                <TextBox Text="{Binding ConnectHost, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputBox}" Width="120"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2">
+                                <TextBlock Text="Port: " Style="{StaticResource LabelText}"/>
+                                <TextBox Text="{Binding ConnectPort, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputBox}" Width="80"/>
+                            </StackPanel>
+                            <Button Content="Verbinden" Command="{Binding ConnectGameCommand}" Style="{StaticResource ActionButton}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Setup phase -->
+                <StackPanel Visibility="{Binding IsSetupPhase, Converter={StaticResource BoolToVis}}"
+                            Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Style="{StaticResource LabelText}" Margin="0,0,12,0">
+                        <Run Text="Platzieren: "/>
+                        <Run Text="{Binding CurrentShipSize}" FontWeight="Bold" Foreground="White"/>
+                        <Run Text="-Felder Schiff  |  Noch: "/>
+                        <Run Text="{Binding ShipsRemaining}" FontWeight="Bold" Foreground="White"/>
+                        <Run Text=" Schiffe"/>
+                    </TextBlock>
+                    <Button Content="{Binding OrientationText}" Command="{Binding ToggleOrientationCommand}"
+                            Style="{StaticResource ActionButton}"/>
+                    <Button Content="Rückgängig" Command="{Binding UndoShipCommand}"
+                            Style="{StaticResource ActionButton}"/>
+                </StackPanel>
+
+                <!-- Waiting phase -->
+                <StackPanel Visibility="{Binding IsWaitingPhase, Converter={StaticResource BoolToVis}}"
+                            HorizontalAlignment="Center">
+                    <TextBlock Text="Warte auf Gegner..." Style="{StaticResource HeaderText}"/>
+                </StackPanel>
+
+                <!-- Playing phase -->
+                <StackPanel Visibility="{Binding IsPlayingPhase, Converter={StaticResource BoolToVis}}"
+                            Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Style="{StaticResource LabelText}">
+                        <Run Text="Sie sind dran: "/>
+                        <Run Text="{Binding IsMyTurn}" FontWeight="Bold" Foreground="White"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Game over phase -->
+                <StackPanel Visibility="{Binding IsGameOverPhase, Converter={StaticResource BoolToVis}}"
+                            HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding GameOverMessage}" Style="{StaticResource HeaderText}" FontSize="16"
+                               Foreground="#ffdd44" Margin="0,0,0,8"/>
+                    <Button Content="Zurück zum Menü" Command="{Binding BackToMenuCommand}"
+                            Style="{StaticResource ActionButton}" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Main game area -->
+        <Grid Background="#1a1a2e" Margin="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Own board -->
+            <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Eigenes Feld" Style="{StaticResource HeaderText}"/>
+                <ItemsControl ItemsSource="{Binding OwnCells}" ItemTemplate="{StaticResource OwnCellTemplate}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="10" Columns="10"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Enemy board -->
+            <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Gegnerisches Feld" Style="{StaticResource HeaderText}"/>
+                <ItemsControl ItemsSource="{Binding EnemyCells}" ItemTemplate="{StaticResource EnemyCellTemplate}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="10" Columns="10"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>
